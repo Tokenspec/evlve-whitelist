@@ -4,10 +4,11 @@ export default async function handler({ query }, res) {
 	const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 	client.login(process.env.BOT_TOKEN)
 	client.on('ready', async () => {
-		const guild=client.guilds.cache.get("939154314948116510")
+		const guild=await client.guilds.cache.get(process.env.GUILD_ID.toString())
 		const { code } = query;
 		if (code) {
 			try {
+
 				const oauthResult = await fetch('https://discord.com/api/oauth2/token', {
 					method: 'POST',
 					body: new URLSearchParams({
@@ -47,11 +48,17 @@ export default async function handler({ query }, res) {
 				}
 				// console.log(user)
 			} catch (error) {
+				console.error(error)
 				res.writeHead(302, { 
 					Location:"/"
 				});
 				res.end();
 			}
+		}else{
+			res.writeHead(302, { 
+				Location:"/"
+			});
+			res.end();
 		}
 	});
 

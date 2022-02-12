@@ -1,6 +1,6 @@
 import Web3 from 'web3'
 import { google } from 'googleapis'
-
+import { Client, Intents } from 'discord.js';
 
 export const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 export async function getAuthToken() {
@@ -22,7 +22,7 @@ export async function getAuthToken() {
 }
 export default async function handler(req, res) {
     const web3 = new Web3(`https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`)
-    const { signature, account, username } = req.body
+    const { signature, account, username, id} = req.body
     const msg = "Do you wish to be whitelisted? 😊"
     const signingAddress = await web3.eth.accounts.recover(msg, signature)
     if (signingAddress.toLowerCase() === account.toLowerCase()) {
@@ -70,8 +70,21 @@ export default async function handler(req, res) {
                 }
             );
         }))
-        Promise.all(promises).then(
-            res.status(200).json({ message: "whitelisted" })
+        Promise.all(promises).then(()=>{
+            const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
+            client.login(process.env.BOT_TOKEN)
+            client.on('ready', async () => {
+                const guild=client.guilds.cache.get(process.env.GUILD_ID)
+                const role= guild.roles.cache.find(role => role.name === "Whitelisted");
+                guild.members.fetch(id).then(member=>{
+                    member.roles.add(role);
+                    res.status(200).json({ message: "whitelisted" })
+                })
+               
+            })
+        }
+           
+           
         )
     }else{
         res.status(200).json({ message: "Bad signature" })

@@ -4,7 +4,7 @@ import { useAbuse } from 'use-abuse'
 import { useRouter } from 'next/router'
 import Web3 from 'web3'
 
-function clearAllStorage(){
+function clearAllStorage() {
   localStorage.removeItem("evlve-whitelisted");
   localStorage.removeItem("meta-auth-signature");
   localStorage.removeItem("discord-auth-username");
@@ -13,8 +13,8 @@ function clearAllStorage(){
 
 export default function Home() {
   const router = useRouter();
-  const [state, setState] = useAbuse({ discordApproved: false, metamaskApproved: false, disableDiscord: true, disableMetamask: true, signature: null, account: null, username: null })
-  const { discordApproved, metamaskApproved, disableDiscord, disableMetamask, signature, account, username } = state
+  const [state, setState] = useAbuse({ discordApproved: false, metamaskApproved: false, disableDiscord: true, disableMetamask: true, signature: null, account: null, username: null ,id:null})
+  const { discordApproved, metamaskApproved, disableDiscord, disableMetamask, signature, account, username,id} = state
   const msg = "Do you wish to be whitelisted? 😊"
   useEffect(() => {
     // clearAllStorage()
@@ -27,7 +27,7 @@ export default function Home() {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ signature, account, username })
+          body: JSON.stringify({ signature, account, username,id })
         }).then(res => res.json()).then(res => {
           const { message } = res
           if (message === "whitelisted") {
@@ -39,7 +39,8 @@ export default function Home() {
   }, [discordApproved, metamaskApproved])
   useEffect(() => {
     const username = localStorage.getItem("discord-auth-username")
-    if (username) setState({ discordApproved: true, disableDiscord: false, username: username })
+    const id = localStorage.getItem("discord-auth-id")
+    if (username && id) setState({ discordApproved: true, disableDiscord: false, username: username,id: id})
     else setState({ disableDiscord: false })
     if (window.ethereum) {
       const signature = localStorage.getItem("meta-auth-signature")
@@ -48,6 +49,7 @@ export default function Home() {
       const web3 = new Web3(window.ethereum)
       if (signature && account) {
         try {
+
           web3.eth.personal.ecRecover(msg, signature).then(signingAddress => {
             if (account === signingAddress) {
               setState({ metamaskApproved: true, disableMetamask: false })
@@ -74,10 +76,12 @@ export default function Home() {
       }, [])
         .then(result => result.json())
         .then(response => {
-          const { username, discriminator } = response;
+          console.log(response)
+          const { username, discriminator,id} = response;
           if (username) {
-            setState({ discordApproved: true, username: username })
+            setState({ discordApproved: true, username: username ,id:id})
             localStorage.setItem("discord-auth-username", username)
+            localStorage.setItem("discord-auth-id", id)
           }
         })
         .catch(console.error);
